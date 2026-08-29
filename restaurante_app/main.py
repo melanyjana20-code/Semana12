@@ -1,103 +1,129 @@
-from pathlib import Path
-
 from modelos.producto import Producto
 from modelos.usuario import Usuario
 
-from servicios.restaurante import Restaurante
 from servicios.archivo_servicio import ArchivoServicio
+from servicios.restaurante import Restaurante
 
 
-def mostrar_menu(restaurante: Restaurante) -> None:
-    print("\n==================================")
-    print(" SISTEMA DE RESTAURANTE")
-    print("==================================")
-
-    for numero, opcion in enumerate(
-        restaurante.opciones_menu,
-        start=1
-    ):
-        print(f"{numero}. {opcion}")
-
-    print("==================================")
+RUTA_PRODUCTOS = "datos/productos.json"
+RUTA_USUARIOS = "datos/usuarios.json"
+RUTA_VENTAS = "datos/ventas.json"
 
 
-def guardar_productos(
-    restaurante: Restaurante,
-    archivo_servicio: ArchivoServicio
-) -> None:
+def mostrar_menu() -> None:
 
-    productos = restaurante.obtener_productos()
+    print("\n")
+    print("========================================")
+    print("          RESTAURANTE APP")
+    print("========================================")
+    print("1. Registrar producto")
+    print("2. Buscar producto")
+    print("3. Actualizar producto")
+    print("4. Eliminar producto")
+    print("5. Listar productos")
+    print("6. Registrar usuario")
+    print("7. Listar usuarios")
+    print("8. Mostrar categorías")
+    print("9. Realizar venta")
+    print("10. Consultar ventas de un usuario")
+    print("11. Listar ventas")
+    print("12. Salir")
+    print("========================================")
 
-    archivo_servicio.guardar_productos(productos)
 
+def main() -> None:
 
-def ejecutar_sistema() -> None:
-    restaurante = Restaurante()
-
-    # Ruta segura hacia la carpeta del proyecto
-    ruta_base = Path(__file__).resolve().parent
-
-    ruta_productos = (
-        ruta_base
-        / "datos"
-        / "productos.json"
+    productos = ArchivoServicio.cargar_productos(
+        RUTA_PRODUCTOS
     )
 
-    archivo_servicio = ArchivoServicio(
-        str(ruta_productos)
+    usuarios = ArchivoServicio.cargar_usuarios(
+        RUTA_USUARIOS
     )
 
-    productos_guardados = (
-        archivo_servicio.cargar_productos()
+    ventas = ArchivoServicio.cargar_ventas(
+        RUTA_VENTAS
     )
 
-    restaurante.cargar_productos(
-        productos_guardados
+    restaurante = Restaurante(
+        productos,
+        usuarios,
+        ventas
     )
 
     while True:
-        mostrar_menu(restaurante)
+
+        mostrar_menu()
 
         opcion = input(
-            "Seleccione una opción (1-9): "
+            "Seleccione una opción: "
         ).strip()
 
-        if opcion == "1":
-            print("\n--- REGISTRAR PRODUCTO ---")
+        # ==================================
+        # 1. REGISTRAR PRODUCTO
+        # ==================================
 
-            codigo = input("Código: ").strip()
-            nombre = input("Nombre: ").strip()
-            categoria = input("Categoría: ").strip()
+        if opcion == "1":
 
             try:
+
+                codigo = input(
+                    "Código: "
+                ).strip()
+
+                nombre = input(
+                    "Nombre: "
+                ).strip()
+
+                categoria = input(
+                    "Categoría: "
+                ).strip()
+
                 precio = float(
-                    input("Precio: ").strip()
+                    input("Precio: ")
+                )
+
+                stock = int(
+                    input("Stock: ")
                 )
 
                 producto = Producto(
                     codigo,
                     nombre,
                     categoria,
-                    precio
+                    precio,
+                    stock
                 )
 
-                registrado = (
-                    restaurante.registrar_producto(
-                        producto
+                if restaurante.registrar_producto(
+                    producto
+                ):
+
+                    ArchivoServicio.guardar_productos(
+                        RUTA_PRODUCTOS,
+                        restaurante.listar_productos()
                     )
-                )
 
-                if registrado:
-                    guardar_productos(
-                        restaurante,
-                        archivo_servicio
+                    print(
+                        "Producto registrado correctamente."
+                    )
+
+                else:
+
+                    print(
+                        "Ya existe un producto "
+                        "con ese código."
                     )
 
             except ValueError as error:
+
                 print(f"Error: {error}")
 
+        # ==================================
+        # 2. BUSCAR PRODUCTO
+        # ==================================
+
         elif opcion == "2":
-            print("\n--- BUSCAR PRODUCTO ---")
 
             codigo = input(
                 "Ingrese el código del producto: "
@@ -107,40 +133,43 @@ def ejecutar_sistema() -> None:
                 codigo
             )
 
-            if producto is None:
-                print("Producto no encontrado.")
+            if producto is not None:
+
+                print("\nProducto encontrado:")
+                print(producto)
 
             else:
+
                 print(
-                    producto.mostrar_informacion()
+                    "Producto no encontrado."
                 )
 
+        # ==================================
+        # 3. ACTUALIZAR PRODUCTO
+        # ==================================
+
         elif opcion == "3":
-            print("\n--- ACTUALIZAR PRODUCTO ---")
-
-            codigo = input(
-                "Código del producto: "
-            ).strip()
-
-            producto = restaurante.buscar_producto(
-                codigo
-            )
-
-            if producto is None:
-                print("Producto no encontrado.")
-                continue
-
-            nombre = input(
-                "Nuevo nombre: "
-            ).strip()
-
-            categoria = input(
-                "Nueva categoría: "
-            ).strip()
 
             try:
+
+                codigo = input(
+                    "Código del producto: "
+                ).strip()
+
+                nombre = input(
+                    "Nuevo nombre: "
+                ).strip()
+
+                categoria = input(
+                    "Nueva categoría: "
+                ).strip()
+
                 precio = float(
-                    input("Nuevo precio: ").strip()
+                    input("Nuevo precio: ")
+                )
+
+                stock = int(
+                    input("Nuevo stock: ")
                 )
 
                 actualizado = (
@@ -148,87 +177,386 @@ def ejecutar_sistema() -> None:
                         codigo,
                         nombre,
                         categoria,
-                        precio
+                        precio,
+                        stock
                     )
                 )
 
                 if actualizado:
-                    guardar_productos(
-                        restaurante,
-                        archivo_servicio
+
+                    ArchivoServicio.guardar_productos(
+                        RUTA_PRODUCTOS,
+                        restaurante.listar_productos()
                     )
 
-            except ValueError:
-                print(
-                    "Error: el precio debe ser "
-                    "un número válido."
-                )
+                    print(
+                        "Producto actualizado correctamente."
+                    )
+
+                else:
+
+                    print(
+                        "Producto no encontrado."
+                    )
+
+            except ValueError as error:
+
+                print(f"Error: {error}")
+
+        # ==================================
+        # 4. ELIMINAR PRODUCTO
+        # ==================================
 
         elif opcion == "4":
-            print("\n--- ELIMINAR PRODUCTO ---")
 
             codigo = input(
                 "Código del producto: "
             ).strip()
 
-            eliminado = (
-                restaurante.eliminar_producto(
-                    codigo
-                )
+            eliminado = restaurante.eliminar_producto(
+                codigo
             )
 
             if eliminado:
-                guardar_productos(
-                    restaurante,
-                    archivo_servicio
+
+                ArchivoServicio.guardar_productos(
+                    RUTA_PRODUCTOS,
+                    restaurante.listar_productos()
                 )
 
+                print(
+                    "Producto eliminado correctamente."
+                )
+
+            else:
+
+                print(
+                    "Producto no encontrado."
+                )
+
+        # ==================================
+        # 5. LISTAR PRODUCTOS
+        # ==================================
+
         elif opcion == "5":
-            restaurante.listar_productos()
+
+            productos_actuales = (
+                restaurante.listar_productos()
+            )
+
+            if not productos_actuales:
+
+                print(
+                    "No existen productos registrados."
+                )
+
+            else:
+
+                print("\n========== PRODUCTOS ==========")
+
+                for producto in productos_actuales:
+
+                    print(producto)
+
+        # ==================================
+        # 6. REGISTRAR USUARIO
+        # ==================================
 
         elif opcion == "6":
-            print("\n--- REGISTRAR USUARIO ---")
 
-            identificacion = input(
-                "Identificación: "
-            ).strip()
+            try:
 
-            nombre = input(
-                "Nombre completo: "
-            ).strip()
+                identificacion = input(
+                    "Identificación: "
+                ).strip()
 
-            correo = input(
-                "Correo electrónico: "
-            ).strip()
+                nombre = input(
+                    "Nombre: "
+                ).strip()
 
-            usuario = Usuario(
-                identificacion,
-                nombre,
-                correo
-            )
+                usuario = Usuario(
+                    identificacion,
+                    nombre
+                )
 
-            restaurante.registrar_usuario(
-                usuario
-            )
+                if restaurante.registrar_usuario(
+                    usuario
+                ):
+
+                    ArchivoServicio.guardar_usuarios(
+                        RUTA_USUARIOS,
+                        restaurante.listar_usuarios()
+                    )
+
+                    print(
+                        "Usuario registrado correctamente."
+                    )
+
+                else:
+
+                    print(
+                        "Ya existe un usuario "
+                        "con esa identificación."
+                    )
+
+            except ValueError as error:
+
+                print(f"Error: {error}")
+
+        # ==================================
+        # 7. LISTAR USUARIOS
+        # ==================================
 
         elif opcion == "7":
-            restaurante.listar_usuarios()
+
+            usuarios_actuales = (
+                restaurante.listar_usuarios()
+            )
+
+            if not usuarios_actuales:
+
+                print(
+                    "No existen usuarios registrados."
+                )
+
+            else:
+
+                print("\n========== USUARIOS ==========")
+
+                for usuario in usuarios_actuales:
+
+                    print(usuario)
+
+        # ==================================
+        # 8. CATEGORÍAS
+        # ==================================
 
         elif opcion == "8":
-            restaurante.mostrar_categorias()
+
+            categorias = (
+                restaurante.obtener_categorias()
+            )
+
+            if not categorias:
+
+                print(
+                    "No existen categorías."
+                )
+
+            else:
+
+                print(
+                    "\n========== CATEGORÍAS =========="
+                )
+
+                for categoria in sorted(categorias):
+
+                    print(
+                        f"- {categoria}"
+                    )
+
+        # ==================================
+        # 9. REALIZAR VENTA
+        # ==================================
 
         elif opcion == "9":
-            print(
-                "\nGracias por utilizar el sistema."
+
+            try:
+
+                identificacion = input(
+                    "Identificación del usuario: "
+                ).strip()
+
+                codigo = input(
+                    "Código del producto: "
+                ).strip()
+
+                cantidad = int(
+                    input("Cantidad a comprar: ")
+                )
+
+                resultado = (
+                    restaurante.vender_producto(
+                        codigo,
+                        identificacion,
+                        cantidad
+                    )
+                )
+
+                if resultado:
+
+                    ArchivoServicio.guardar_productos(
+                        RUTA_PRODUCTOS,
+                        restaurante.listar_productos()
+                    )
+
+                    ArchivoServicio.guardar_ventas(
+                        RUTA_VENTAS,
+                        restaurante.listar_ventas()
+                    )
+
+                    print(
+                        "Venta registrada correctamente."
+                    )
+
+                    producto = restaurante.buscar_producto(
+                        codigo
+                    )
+
+                    if producto is not None:
+
+                        print(
+                            f"Stock disponible: "
+                            f"{producto.stock}"
+                        )
+
+                else:
+
+                    print(
+                        "No se pudo realizar la venta."
+                    )
+
+                    print(
+                        "Verifique que el usuario, "
+                        "producto, cantidad y stock "
+                        "sean correctos."
+                    )
+
+            except ValueError:
+
+                print(
+                    "Error: la cantidad debe ser "
+                    "un número entero."
+                )
+
+        # ==================================
+        # 10. CONSULTAR VENTAS POR USUARIO
+        # ==================================
+
+        elif opcion == "10":
+
+            identificacion = input(
+                "Identificación del usuario: "
+            ).strip()
+
+            usuario = restaurante.buscar_usuario(
+                identificacion
             )
+
+            if usuario is None:
+
+                print(
+                    "Usuario no encontrado."
+                )
+
+                continue
+
+            ventas_usuario = (
+                restaurante.consultar_ventas_usuario(
+                    identificacion
+                )
+            )
+
+            if not ventas_usuario:
+
+                print(
+                    "El usuario no tiene "
+                    "ventas registradas."
+                )
+
+            else:
+
+                print(
+                    f"\nVentas del usuario: "
+                    f"{usuario.nombre}"
+                )
+
+                print(
+                    "================================"
+                )
+
+                for venta in ventas_usuario:
+
+                    producto = (
+                        restaurante.buscar_producto(
+                            venta.producto_codigo
+                        )
+                    )
+
+                    if producto is not None:
+
+                        print(
+                            f"Producto: {producto.nombre}"
+                        )
+
+                        print(
+                            f"Código: {producto.codigo}"
+                        )
+
+                        print(
+                            f"Cantidad: {venta.cantidad}"
+                        )
+
+                        print(
+                            "--------------------------------"
+                        )
+
+                    else:
+
+                        print(
+                            f"Producto: "
+                            f"{venta.producto_codigo}"
+                        )
+
+                        print(
+                            f"Cantidad: "
+                            f"{venta.cantidad}"
+                        )
+
+        # ==================================
+        # 11. LISTAR VENTAS
+        # ==================================
+
+        elif opcion == "11":
+
+            ventas_actuales = (
+                restaurante.listar_ventas()
+            )
+
+            if not ventas_actuales:
+
+                print(
+                    "No existen ventas registradas."
+                )
+
+            else:
+
+                print(
+                    "\n========== VENTAS =========="
+                )
+
+                for venta in ventas_actuales:
+
+                    print(venta)
+
+        # ==================================
+        # 12. SALIR
+        # ==================================
+
+        elif opcion == "12":
+
+            print(
+                "Programa finalizado."
+            )
+
             break
 
         else:
+
             print(
-                "Opción no válida. "
-                "Ingrese un número del 1 al 9."
+                "Opción inválida."
             )
 
 
 if __name__ == "__main__":
-    ejecutar_sistema()
+    main()

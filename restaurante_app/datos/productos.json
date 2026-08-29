@@ -1,1 +1,30 @@
-[]
+[
+    {
+        "codigo": "P001",
+        "nombre": "Hamburguesa",
+        "categoria": "Comida",
+        "precio": 5.0,
+        "stock": 8
+    },
+    {
+        "codigo": "P002",
+        "nombre": "Pizza",
+        "categoria": "Comida",
+        "precio": 8.0,
+        "stock": 15
+    },
+    {
+        "codigo": "P003",
+        "nombre": "Jugo",
+        "categoria": "Bebida",
+        "precio": 2.5,
+        "stock": 20
+    },
+    {
+        "codigo": "E005",
+        "nombre": "ARROZ MARINO",
+        "categoria": "COMIDA",
+        "precio": 10.0,
+        "stock": 10
+    }
+]

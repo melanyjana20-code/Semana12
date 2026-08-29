@@ -1,168 +1,180 @@
-# Aplicación Restaurante
+# Restaurante App - Semana 11
 
-Proyecto académico desarrollado en Python para aplicar Programación Orientada a Objetos, estructuras de datos, manejo de archivos JSON y manejo de excepciones.
+**Estudiante:** Melany Jaña
 
-La aplicación permite registrar, buscar, actualizar, eliminar y listar productos. También permite registrar usuarios, listarlos y mostrar las categorías de productos sin repetir. Los productos se conservan en un archivo JSON para que permanezcan disponibles después de cerrar y volver a ejecutar el programa.
+## Descripción
+
+Aplicación académica desarrollada en Python para la asignatura Programación Orientada a Objetos.
+
+El proyecto corresponde a la evolución de la aplicación `restaurante_app` desarrollada durante la Semana 10.
+
+En esta Semana 11 se incorporan colecciones de objetos, relaciones entre Usuario y Producto mediante la entidad Venta, control de stock y persistencia JSON de productos, usuarios y ventas.
 
 ## Estructura del proyecto
 
-```text
+```
 restaurante_app/
-│
 ├── datos/
-│   └── productos.json
+│   ├── productos.json
+│   ├── usuarios.json
+│   └── ventas.json
 │
 ├── modelos/
 │   ├── __init__.py
 │   ├── producto.py
-│   └── usuario.py
+│   ├── usuario.py
+│   └── venta.py
 │
 ├── servicios/
 │   ├── __init__.py
 │   ├── archivo_servicio.py
 │   └── restaurante.py
 │
-├── main.py
-└── README.md
+└── main.py
 ```
 
-La carpeta `datos/` se utiliza para almacenar físicamente el archivo `productos.json`, encargado de conservar la información de los productos.
+## Componentes
 
-## Ejecución
+### Producto
 
-Desde la carpeta `restaurante_app`, ejecutar:
+La clase `Producto` representa los productos disponibles en el restaurante.
 
-```bash
-python main.py
-```
+Contiene:
 
-## Responsabilidades
+-   Código.
+-   Nombre.
+-   Categoría.
+-   Precio.
+-   Stock.
 
-- `modelos/producto.py`: contiene la clase `Producto`, sus atributos, validaciones y la conversión del objeto a una representación compatible con JSON.
+El stock no puede ser negativo y se reduce cuando se realiza una venta válida.
 
-- `modelos/usuario.py`: contiene la clase `Usuario` y sus datos principales.
+### Usuario
 
-- `servicios/restaurante.py`: administra las colecciones de productos y usuarios, además de las operaciones principales del sistema.
+La clase `Usuario` representa a las personas registradas en el sistema.
 
-- `servicios/archivo_servicio.py`: se encarga de leer y escribir los productos en el archivo JSON utilizando `with open()`, `json.load()` y `json.dump()`.
+Contiene:
 
-- `main.py`: contiene el menú principal, crea los servicios, recupera los productos almacenados al iniciar y solicita el guardado cuando se registra, actualiza o elimina un producto.
+-   Identificación.
+-   Nombre.
 
-## Persistencia con JSON
+Los usuarios se almacenan y recuperan mediante el archivo `usuarios.json`.
 
-La aplicación utiliza el archivo `datos/productos.json` para conservar los productos registrados.
+### Venta
 
-Al iniciar el programa, se realiza la lectura del archivo mediante `json.load()`. Cada registro recuperado se utiliza para reconstruir un objeto de la clase `Producto`, permitiendo que el sistema continúe trabajando con objetos.
+La clase `Venta` representa la relación entre un usuario y un producto vendido.
 
-Cuando se registra, actualiza o elimina un producto, la colección actual se convierte a una representación compatible con JSON y se guarda nuevamente mediante `json.dump()`.
+Contiene:
 
-### Flujo de carga
+-   Identificación del usuario.
+-   Código del producto.
+-   Cantidad vendida.
 
-```text
-Inicio de la aplicación
-        |
-Leer datos/productos.json
-        |
-Convertir registros a objetos Producto
-        |
-Cargar productos en el servicio Restaurante
-        |
-Ejecutar el menú principal
-```
+### Restaurante
 
-### Flujo de guardado
+La clase `Restaurante` administra las colecciones de:
 
-```text
-Registrar, actualizar o eliminar producto
-        |
-Restaurante modifica la colección
-        |
-Producto se convierte a diccionario
-        |
-ArchivoServicio guarda la información
-        |
-Actualizar datos/productos.json
-```
+-   Productos.
+-   Usuarios.
+-   Ventas.
+
+También contiene las reglas principales del sistema, como registrar, buscar, actualizar, eliminar y vender productos.
+
+### ArchivoServicio
+
+La clase `ArchivoServicio` administra la persistencia de información mediante archivos JSON.
+
+Utiliza:
+
+-   `json.dump()`
+-   `json.load()`
+-   `with open()`
+-   Codificación UTF-8.
+
+## Relación Usuario - Producto - Venta
+
+Para realizar una venta se verifica primero que exista el usuario y que exista el producto.
+
+Después se valida que la cantidad sea mayor que cero y que exista suficiente stock.
+
+Si todas las condiciones son correctas:
+
+1.  Se crea un objeto `Venta`.
+2.  La venta se agrega a la colección de ventas.
+3.  Se disminuye el stock del producto.
+4.  Se guarda `ventas.json`.
+5.  Se guarda `productos.json`.
+
+## Persistencia
+
+La aplicación utiliza tres archivos JSON:
+
+### productos.json
+
+Conserva los productos registrados y su stock actualizado.
+
+### usuarios.json
+
+Conserva los usuarios registrados.
+
+### ventas.json
+
+Conserva las ventas realizadas y la relación entre usuarios y productos.
+
+Al iniciar el programa, los archivos JSON son leídos y sus registros son reconstruidos nuevamente como objetos.
 
 ## Manejo de excepciones
 
-El proyecto utiliza excepciones específicas para controlar posibles errores durante la lectura, escritura y recuperación de información.
+Se controlan excepciones específicas:
 
-- `FileNotFoundError`: permite iniciar el programa con una colección vacía cuando `productos.json` todavía no existe.
+-   `FileNotFoundError`: permite iniciar con una colección vacía si un archivo todavía no existe.
+-   `json.JSONDecodeError`: controla archivos JSON inválidos.
+-   `PermissionError`: controla problemas de permisos.
+-   `KeyError`: controla claves faltantes en registros JSON.
+-   `ValueError`: controla datos inválidos y validaciones de los modelos.
 
-- `json.JSONDecodeError`: controla el caso en que el archivo existe, pero su contenido no tiene un formato JSON válido.
+No se utiliza `except: pass`.
 
-- `PermissionError`: informa cuando no existen permisos suficientes para leer o guardar el archivo.
+## Ejecución
 
-- `KeyError`: controla registros que no contienen todos los campos necesarios para reconstruir un producto.
+Desde la carpeta `restaurante_app` ejecutar:
 
-- `ValueError` y `TypeError`: permiten controlar datos con valores o tipos incorrectos.
-
-No se utiliza `except: pass`, ya que los errores son tratados de manera específica.
-
-## Uso de estructuras de datos
-
-### Lista (`list`)
-
-Se utiliza para almacenar las colecciones de productos y usuarios durante la ejecución.
-
-La lista permite registrar, buscar, actualizar, eliminar y recorrer los objetos almacenados.
-
-### Tupla (`tuple`)
-
-Se utiliza para representar opciones o valores definidos que no necesitan modificarse durante la ejecución del programa.
-
-### Diccionario (`dict`)
-
-Se utiliza para representar temporalmente la información de un producto mediante pares de clave y valor.
-
-Esta representación permite convertir los objetos `Producto` a un formato compatible con JSON sin reemplazar la clase `Producto`.
-
-Ejemplo de representación:
-
-```json
-{
-    "codigo": "P001",
-    "nombre": "Hamburguesa",
-    "categoria": "Comida",
-    "precio": 4.5
-}
+```
+python main.py
 ```
 
-### Conjunto (`set`)
+## Operaciones disponibles
 
-Se utiliza para obtener las categorías de los productos sin elementos repetidos, permitiendo mostrar cada categoría una sola vez.
+1.  Registrar producto.
+2.  Buscar producto.
+3.  Actualizar producto.
+4.  Eliminar producto.
+5.  Listar productos.
+6.  Registrar usuario.
+7.  Listar usuarios.
+8.  Mostrar categorías.
+9.  Realizar venta.
+10.  Consultar ventas de un usuario.
+11.  Listar ventas.
+12.  Salir.
 
-## Menú principal
+## Pruebas realizadas
 
-El programa permite realizar las siguientes operaciones:
+Se realizaron pruebas de:
 
-1. Registrar producto
-2. Buscar producto
-3. Actualizar producto
-4. Eliminar producto
-5. Listar productos
-6. Registrar usuario
-7. Listar usuarios
-8. Mostrar categorías
-9. Salir
+1.  Registro de productos con stock.
+2.  Registro de usuarios.
+3.  Realización de una venta válida.
+4.  Verificación de disminución del stock.
+5.  Verificación de la venta registrada en `ventas.json`.
+6.  Verificación del nuevo stock en `productos.json`.
+7.  Consulta de ventas por usuario.
+8.  Cierre y reinicio del programa.
+9.  Recuperación de productos, usuarios y ventas desde los archivos JSON.
+10.  Intento de realizar una venta con una cantidad mayor al stock disponible.
+11.  Verificación de que una venta inválida no modifica el stock.
+12.  Validación de cantidades menores o iguales a cero.
 
-## Comprobación de persistencia
+## Objetivo
 
-Para comprobar el funcionamiento de la persistencia se realizaron las siguientes pruebas:
-
-1. Se ejecutó `main.py`.
-2. Se registró un producto desde el menú principal.
-3. Se verificó que la información fuera almacenada en `datos/productos.json`.
-4. Se cerró completamente el programa.
-5. Se ejecutó nuevamente `main.py`.
-6. Se utilizó la opción de listar productos y se comprobó que el producto registrado anteriormente fue recuperado.
-7. Se actualizó la información del producto y se comprobó que el cambio permaneciera después de reiniciar el programa.
-8. Se eliminó el producto y se volvió a ejecutar la aplicación.
-9. Finalmente, se comprobó que el producto eliminado ya no aparecía y que `productos.json` contenía una lista vacía (`[]`).
-
-De esta manera se comprobó que la aplicación mantiene correctamente la información de los productos entre diferentes ejecuciones.
-
-## Objetivo pedagógico
-
-Aplicar Programación Orientada a Objetos junto con estructuras de datos persistencia mediante archivos JSON y manejo específico de excepciones, manteniendo separadas las responsabilidades de los modelos, servicios, almacenamiento e interacción por consola.
+Aplicar los fundamentos de Programación Orientada a Objetos, colecciones, relaciones entre objetos, persistencia mediante archivos JSON y manejo específico de excepciones dentro de una aplicación de restaurante.

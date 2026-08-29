@@ -2,48 +2,32 @@ from typing import List, Optional
 
 from modelos.producto import Producto
 from modelos.usuario import Usuario
+from modelos.venta import Venta
 
 
 class Restaurante:
-    def __init__(self):
-        # LISTAS: almacenan colecciones dinámicas
-        self.productos: List[Producto] = []
-        self.usuarios: List[Usuario] = []
 
-        # TUPLA: información estable del sistema
-        self.opciones_menu = (
-            "Registrar producto",
-            "Buscar producto",
-            "Actualizar producto",
-            "Eliminar producto",
-            "Listar productos",
-            "Registrar usuario",
-            "Listar usuarios",
-            "Mostrar categorías",
-            "Salir"
+    def __init__(
+        self,
+        productos: Optional[List[Producto]] = None,
+        usuarios: Optional[List[Usuario]] = None,
+        ventas: Optional[List[Venta]] = None
+    ):
+        self._productos = (
+            productos if productos is not None else []
         )
 
-        # DICCIONARIO: relación clave - valor
-        self.descripcion_opciones = {
-            1: "Registrar un nuevo producto",
-            2: "Buscar producto por código",
-            3: "Actualizar información de un producto",
-            4: "Eliminar producto por código",
-            5: "Mostrar todos los productos",
-            6: "Registrar un nuevo usuario",
-            7: "Mostrar todos los usuarios",
-            8: "Mostrar categorías únicas",
-            9: "Salir del sistema"
-        }
+        self._usuarios = (
+            usuarios if usuarios is not None else []
+        )
 
-    def cargar_productos(
-        self,
-        productos: List[Producto]
-    ) -> None:
-        self.productos = productos
+        self._ventas = (
+            ventas if ventas is not None else []
+        )
 
-    def obtener_productos(self) -> List[Producto]:
-        return list(self.productos)
+    # ==============================
+    # PRODUCTOS
+    # ==============================
 
     def registrar_producto(
         self,
@@ -51,15 +35,10 @@ class Restaurante:
     ) -> bool:
 
         if self.buscar_producto(producto.codigo) is not None:
-            print(
-                "Error: ya existe un producto "
-                "con ese código."
-            )
             return False
 
-        self.productos.append(producto)
+        self._productos.append(producto)
 
-        print("Producto registrado correctamente.")
         return True
 
     def buscar_producto(
@@ -67,7 +46,8 @@ class Restaurante:
         codigo: str
     ) -> Optional[Producto]:
 
-        for producto in self.productos:
+        for producto in self._productos:
+
             if producto.codigo == codigo:
                 return producto
 
@@ -78,32 +58,22 @@ class Restaurante:
         codigo: str,
         nombre: str,
         categoria: str,
-        precio: float
+        precio: float,
+        stock: int
     ) -> bool:
 
         producto = self.buscar_producto(codigo)
 
         if producto is None:
-            print("Producto no encontrado.")
             return False
 
-        if not nombre.strip():
-            print("Error: el nombre no puede estar vacío.")
-            return False
+        producto.actualizar(
+            nombre,
+            categoria,
+            precio,
+            stock
+        )
 
-        if not categoria.strip():
-            print("Error: la categoría no puede estar vacía.")
-            return False
-
-        if precio < 0:
-            print("Error: el precio no puede ser negativo.")
-            return False
-
-        producto.nombre = nombre
-        producto.categoria = categoria
-        producto.precio = precio
-
-        print("Producto actualizado correctamente.")
         return True
 
     def eliminar_producto(
@@ -114,72 +84,115 @@ class Restaurante:
         producto = self.buscar_producto(codigo)
 
         if producto is None:
-            print("Producto no encontrado.")
             return False
 
-        self.productos.remove(producto)
+        self._productos.remove(producto)
 
-        print("Producto eliminado correctamente.")
         return True
 
-    def listar_productos(self) -> None:
-        if not self.productos:
-            print("No hay productos registrados.")
-            return
+    def listar_productos(self) -> List[Producto]:
 
-        print("\n--- LISTA DE PRODUCTOS ---")
+        return self._productos.copy()
 
-        for producto in self.productos:
-            print(producto.mostrar_informacion())
+    def obtener_categorias(self) -> set:
+
+        return {
+            producto.categoria
+            for producto in self._productos
+        }
+
+    # ==============================
+    # USUARIOS
+    # ==============================
 
     def registrar_usuario(
         self,
         usuario: Usuario
     ) -> bool:
 
-        for usuario_registrado in self.usuarios:
-            if (
-                usuario_registrado.identificacion
-                == usuario.identificacion
-            ):
-                print(
-                    "Error: ya existe un usuario "
-                    "con esa identificación."
-                )
-                return False
+        if self.buscar_usuario(
+            usuario.identificacion
+        ) is not None:
 
-        self.usuarios.append(usuario)
+            return False
 
-        print("Usuario registrado correctamente.")
+        self._usuarios.append(usuario)
+
         return True
 
-    def listar_usuarios(self) -> None:
-        if not self.usuarios:
-            print("No hay usuarios registrados.")
-            return
+    def buscar_usuario(
+        self,
+        identificacion: str
+    ) -> Optional[Usuario]:
 
-        print("\n--- LISTA DE USUARIOS ---")
+        for usuario in self._usuarios:
 
-        for usuario in self.usuarios:
-            print(usuario.mostrar_informacion())
+            if usuario.identificacion == identificacion:
+                return usuario
 
-    def obtener_categorias(self) -> set[str]:
-        # CONJUNTO: evita categorías duplicadas
-        categorias = set()
+        return None
 
-        for producto in self.productos:
-            categorias.add(producto.categoria)
+    def listar_usuarios(self) -> List[Usuario]:
 
-        return categorias
+        return self._usuarios.copy()
 
-    def mostrar_categorias(self) -> None:
-        categorias = self.obtener_categorias()
+    # ==============================
+    # VENTAS
+    # ==============================
 
-        if not categorias:
-            print("No hay categorías registradas.")
-            return
+    def vender_producto(
+        self,
+        codigo_producto: str,
+        identificacion_usuario: str,
+        cantidad: int
+    ) -> bool:
 
-        print("\n--- CATEGORÍAS ---")
+        usuario = self.buscar_usuario(
+            identificacion_usuario
+        )
 
-        for categoria in sorted(categorias):
-            print(categoria)
+        producto = self.buscar_producto(
+            codigo_producto
+        )
+
+        if usuario is None:
+            return False
+
+        if producto is None:
+            return False
+
+        if cantidad <= 0:
+            return False
+
+        if producto.stock < cantidad:
+            return False
+
+        venta = Venta(
+            usuario.identificacion,
+            producto.codigo,
+            cantidad
+        )
+
+        self._ventas.append(venta)
+
+        producto.vender(cantidad)
+
+        return True
+
+    def consultar_ventas_usuario(
+        self,
+        identificacion_usuario: str
+    ) -> List[Venta]:
+
+        ventas_usuario: List[Venta] = []
+
+        for venta in self._ventas:
+
+            if venta.usuario_id == identificacion_usuario:
+                ventas_usuario.append(venta)
+
+        return ventas_usuario
+
+    def listar_ventas(self) -> List[Venta]:
+
+        return self._ventas.copy()

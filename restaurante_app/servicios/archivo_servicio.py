@@ -1,75 +1,87 @@
 import json
+from typing import List
+
 from modelos.producto import Producto
+from modelos.usuario import Usuario
+from modelos.venta import Venta
 
 
 class ArchivoServicio:
-    def __init__(self, ruta_archivo: str):
-        self.ruta_archivo = ruta_archivo
 
-    def guardar_productos(self, productos: list[Producto]) -> bool:
-        datos = []
+    # ==============================
+    # PRODUCTOS
+    # ==============================
 
-        for producto in productos:
-            datos.append(producto.a_diccionario())
+    @staticmethod
+    def guardar_productos(
+        ruta: str,
+        productos: List[Producto]
+    ) -> None:
 
         try:
+            datos = [
+                producto.convertir_a_diccionario()
+                for producto in productos
+            ]
+
             with open(
-                self.ruta_archivo,
+                ruta,
                 "w",
                 encoding="utf-8"
             ) as archivo:
+
                 json.dump(
                     datos,
                     archivo,
-                    indent=4,
-                    ensure_ascii=False
+                    ensure_ascii=False,
+                    indent=4
                 )
 
-            return True
-
         except PermissionError:
-            print("Error: no se tienen permisos para guardar el archivo.")
-            return False
+            print(
+                "Error: no hay permisos para "
+                "guardar productos."
+            )
 
-    def cargar_productos(self) -> list[Producto]:
-        productos = []
+    @staticmethod
+    def cargar_productos(
+        ruta: str
+    ) -> List[Producto]:
 
         try:
             with open(
-                self.ruta_archivo,
+                ruta,
                 "r",
                 encoding="utf-8"
             ) as archivo:
+
                 datos = json.load(archivo)
 
-            if not isinstance(datos, list):
-                print(
-                    "Error: el contenido de productos.json "
-                    "debe ser una lista."
-                )
-                return []
+            productos = []
 
-            for registro in datos:
+            for dato in datos:
+
                 try:
                     producto = Producto(
-                        codigo=registro["codigo"],
-                        nombre=registro["nombre"],
-                        categoria=registro["categoria"],
-                        precio=float(registro["precio"])
+                        dato["codigo"],
+                        dato["nombre"],
+                        dato["categoria"],
+                        float(dato["precio"]),
+                        int(dato["stock"])
                     )
 
                     productos.append(producto)
 
-                except KeyError:
+                except KeyError as error:
                     print(
-                        "Advertencia: se encontró un registro "
-                        "con información incompleta."
+                        f"Error: falta la clave "
+                        f"{error} en un producto."
                     )
 
-                except (ValueError, TypeError):
+                except ValueError as error:
                     print(
-                        "Advertencia: se encontró un registro "
-                        "con información inválida."
+                        f"Error en los datos "
+                        f"del producto: {error}"
                     )
 
             return productos
@@ -79,14 +91,199 @@ class ArchivoServicio:
 
         except json.JSONDecodeError:
             print(
-                "Error: productos.json no contiene "
-                "un formato JSON válido."
+                "Error: productos.json contiene "
+                "JSON inválido."
             )
             return []
 
         except PermissionError:
             print(
-                "Error: no se tienen permisos para leer "
-                "productos.json."
+                "Error: no hay permisos para "
+                "leer productos."
+            )
+            return []
+
+    # ==============================
+    # USUARIOS
+    # ==============================
+
+    @staticmethod
+    def guardar_usuarios(
+        ruta: str,
+        usuarios: List[Usuario]
+    ) -> None:
+
+        try:
+            datos = [
+                usuario.convertir_a_diccionario()
+                for usuario in usuarios
+            ]
+
+            with open(
+                ruta,
+                "w",
+                encoding="utf-8"
+            ) as archivo:
+
+                json.dump(
+                    datos,
+                    archivo,
+                    ensure_ascii=False,
+                    indent=4
+                )
+
+        except PermissionError:
+            print(
+                "Error: no hay permisos para "
+                "guardar usuarios."
+            )
+
+    @staticmethod
+    def cargar_usuarios(
+        ruta: str
+    ) -> List[Usuario]:
+
+        try:
+            with open(
+                ruta,
+                "r",
+                encoding="utf-8"
+            ) as archivo:
+
+                datos = json.load(archivo)
+
+            usuarios = []
+
+            for dato in datos:
+
+                try:
+                    usuario = Usuario(
+                        dato["identificacion"],
+                        dato["nombre"]
+                    )
+
+                    usuarios.append(usuario)
+
+                except KeyError as error:
+                    print(
+                        f"Error: falta la clave "
+                        f"{error} en un usuario."
+                    )
+
+                except ValueError as error:
+                    print(
+                        f"Error en los datos "
+                        f"del usuario: {error}"
+                    )
+
+            return usuarios
+
+        except FileNotFoundError:
+            return []
+
+        except json.JSONDecodeError:
+            print(
+                "Error: usuarios.json contiene "
+                "JSON inválido."
+            )
+            return []
+
+        except PermissionError:
+            print(
+                "Error: no hay permisos para "
+                "leer usuarios."
+            )
+            return []
+
+    # ==============================
+    # VENTAS
+    # ==============================
+
+    @staticmethod
+    def guardar_ventas(
+        ruta: str,
+        ventas: List[Venta]
+    ) -> None:
+
+        try:
+            datos = [
+                venta.convertir_a_diccionario()
+                for venta in ventas
+            ]
+
+            with open(
+                ruta,
+                "w",
+                encoding="utf-8"
+            ) as archivo:
+
+                json.dump(
+                    datos,
+                    archivo,
+                    ensure_ascii=False,
+                    indent=4
+                )
+
+        except PermissionError:
+            print(
+                "Error: no hay permisos para "
+                "guardar ventas."
+            )
+
+    @staticmethod
+    def cargar_ventas(
+        ruta: str
+    ) -> List[Venta]:
+
+        try:
+            with open(
+                ruta,
+                "r",
+                encoding="utf-8"
+            ) as archivo:
+
+                datos = json.load(archivo)
+
+            ventas = []
+
+            for dato in datos:
+
+                try:
+                    venta = Venta(
+                        dato["usuario_id"],
+                        dato["producto_codigo"],
+                        int(dato["cantidad"])
+                    )
+
+                    ventas.append(venta)
+
+                except KeyError as error:
+                    print(
+                        f"Error: falta la clave "
+                        f"{error} en una venta."
+                    )
+
+                except ValueError as error:
+                    print(
+                        f"Error en los datos "
+                        f"de la venta: {error}"
+                    )
+
+            return ventas
+
+        except FileNotFoundError:
+            return []
+
+        except json.JSONDecodeError:
+            print(
+                "Error: ventas.json contiene "
+                "JSON inválido."
+            )
+            return []
+
+        except PermissionError:
+            print(
+                "Error: no hay permisos para "
+                "leer ventas."
             )
             return []
