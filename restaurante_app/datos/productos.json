@@ -26,5 +26,19 @@
         "categoria": "COMIDA",
         "precio": 10.0,
         "stock": 10
+    },
+    {
+        "codigo": "A001",
+        "nombre": "ARROZ CON CANGREJO",
+        "categoria": "COMIDA",
+        "precio": 15.0,
+        "stock": 7
+    },
+    {
+        "codigo": "A005",
+        "nombre": "ARROZ CON POLLO",
+        "categoria": "COMIDA",
+        "precio": 5.0,
+        "stock": 6
     }
 ]

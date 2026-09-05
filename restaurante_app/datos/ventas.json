@@ -8,5 +8,10 @@
         "usuario_id": "1251248710",
         "producto_codigo": "E005",
         "cantidad": 5
+    },
+    {
+        "usuario_id": "1251248710",
+        "producto_codigo": "A001",
+        "cantidad": 5
     }
 ]

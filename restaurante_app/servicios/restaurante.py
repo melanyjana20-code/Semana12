@@ -6,7 +6,6 @@ from modelos.venta import Venta
 
 
 class Restaurante:
-
     def __init__(
         self,
         productos: Optional[List[Producto]] = None,
@@ -16,7 +15,6 @@ class Restaurante:
         self._productos = (
             productos if productos is not None else []
         )
-
         self._usuarios = (
             usuarios if usuarios is not None else []
         )
@@ -24,6 +22,56 @@ class Restaurante:
         self._ventas = (
             ventas if ventas is not None else []
         )
+
+        # ==========================================
+        # NUEVOS ÍNDICES PARA OPTIMIZAR BÚSQUEDAS
+        # ==========================================
+
+        # Índice de productos por código
+        self._productos_por_codigo: dict[str, Producto] = {}
+
+        # Índice de usuarios por identificación
+        self._usuarios_por_identificacion: dict[str, Usuario] = {}
+
+        # Índice de ventas por usuario
+        self._ventas_por_usuario: dict[str, List[Venta]] = {}
+
+        # Conjunto de categorías
+        self._categorias: set[str] = set()
+
+        # Reconstruir índices con los datos cargados
+        self._reconstruir_indices()
+
+    # ==========================================
+    # RECONSTRUIR ÍNDICES
+    # ==========================================
+
+    def _reconstruir_indices(self) -> None:
+
+        for producto in self._productos:
+            self._productos_por_codigo[
+                producto.codigo
+            ] = producto
+
+            self._categorias.add(
+                producto.categoria
+            )
+
+        for usuario in self._usuarios:
+            self._usuarios_por_identificacion[
+                usuario.identificacion
+            ] = usuario
+
+        for venta in self._ventas:
+
+            if venta.usuario_id not in self._ventas_por_usuario:
+                self._ventas_por_usuario[
+                    venta.usuario_id
+                ] = []
+
+            self._ventas_por_usuario[
+                venta.usuario_id
+            ].append(venta)
 
     # ==============================
     # PRODUCTOS
@@ -39,6 +87,16 @@ class Restaurante:
 
         self._productos.append(producto)
 
+        # Agregar al índice
+        self._productos_por_codigo[
+            producto.codigo
+        ] = producto
+
+        # Agregar categoría al conjunto
+        self._categorias.add(
+            producto.categoria
+        )
+
         return True
 
     def buscar_producto(
@@ -46,12 +104,8 @@ class Restaurante:
         codigo: str
     ) -> Optional[Producto]:
 
-        for producto in self._productos:
-
-            if producto.codigo == codigo:
-                return producto
-
-        return None
+        # Búsqueda optimizada utilizando diccionario
+        return self._productos_por_codigo.get(codigo)
 
     def actualizar_producto(
         self,
@@ -74,6 +128,9 @@ class Restaurante:
             stock
         )
 
+        # Mantener actualizado el conjunto de categorías
+        self._categorias.add(categoria)
+
         return True
 
     def eliminar_producto(
@@ -88,6 +145,19 @@ class Restaurante:
 
         self._productos.remove(producto)
 
+        # Eliminar del índice
+        self._productos_por_codigo.pop(
+            codigo,
+            None
+        )
+
+        # Reconstruir categorías para evitar
+        # conservar categorías que ya no existen
+        self._categorias = {
+            producto.categoria
+            for producto in self._productos
+        }
+
         return True
 
     def listar_productos(self) -> List[Producto]:
@@ -96,10 +166,7 @@ class Restaurante:
 
     def obtener_categorias(self) -> set:
 
-        return {
-            producto.categoria
-            for producto in self._productos
-        }
+        return self._categorias.copy()
 
     # ==============================
     # USUARIOS
@@ -118,6 +185,11 @@ class Restaurante:
 
         self._usuarios.append(usuario)
 
+        # Agregar al índice
+        self._usuarios_por_identificacion[
+            usuario.identificacion
+        ] = usuario
+
         return True
 
     def buscar_usuario(
@@ -125,12 +197,10 @@ class Restaurante:
         identificacion: str
     ) -> Optional[Usuario]:
 
-        for usuario in self._usuarios:
-
-            if usuario.identificacion == identificacion:
-                return usuario
-
-        return None
+        # Búsqueda optimizada utilizando diccionario
+        return self._usuarios_por_identificacion.get(
+            identificacion
+        )
 
     def listar_usuarios(self) -> List[Usuario]:
 
@@ -177,6 +247,16 @@ class Restaurante:
 
         producto.vender(cantidad)
 
+        # Agregar venta al índice por usuario
+        if usuario.identificacion not in self._ventas_por_usuario:
+            self._ventas_por_usuario[
+                usuario.identificacion
+            ] = []
+
+        self._ventas_por_usuario[
+            usuario.identificacion
+        ].append(venta)
+
         return True
 
     def consultar_ventas_usuario(
@@ -184,14 +264,11 @@ class Restaurante:
         identificacion_usuario: str
     ) -> List[Venta]:
 
-        ventas_usuario: List[Venta] = []
-
-        for venta in self._ventas:
-
-            if venta.usuario_id == identificacion_usuario:
-                ventas_usuario.append(venta)
-
-        return ventas_usuario
+        # Consulta optimizada mediante diccionario
+        return self._ventas_por_usuario.get(
+            identificacion_usuario,
+            []
+        ).copy()
 
     def listar_ventas(self) -> List[Venta]:
 
